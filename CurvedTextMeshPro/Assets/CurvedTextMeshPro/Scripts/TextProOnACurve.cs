@@ -73,6 +73,8 @@ namespace ntw.CurvedTextMeshPro
                 return;
             }
 
+            m_forceUpdate = false;
+
             //during the loop, vertices represents the 4 vertices of a single character we're analyzing, 
             //while matrix is the roto-translation matrix that will rotate and scale the characters so that they will
             //follow the curve
