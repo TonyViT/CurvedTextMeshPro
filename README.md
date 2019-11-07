@@ -23,6 +23,7 @@ If you want to use the project, you must have Unity editor installed. It has bee
   
 ## Known issues
 This is an experimental project in its first version and so it is not optimized and may have some bugs.
+Furthermore, in the circle text example, since I consider the characters from their central point, you may need to specify an angle a bit bigger than the one you have in mind to compensate for the external margins of the font (e.g. to have a text that makes a perfect half-circle, you have to input an angle greater than 180)
 
 People more skilled than me are welcome to contribute to this project... to improve and expand it.
 
