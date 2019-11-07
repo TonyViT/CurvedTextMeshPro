@@ -41,6 +41,11 @@ namespace ntw.CurvedTextMeshPro
         private TMP_Text m_TextComponent;
 
         /// <summary>
+        /// True if the text must be updated at this frame 
+        /// </summary>
+        private bool m_forceUpdate;
+
+        /// <summary>
         /// Awake
         /// </summary>
         private void Awake()
@@ -49,11 +54,12 @@ namespace ntw.CurvedTextMeshPro
         }
 
         /// <summary>
-        /// Start
+        /// OnEnable
         /// </summary>
-        private void Start()
+        private void OnEnable()
         {
-            m_TextComponent.havePropertiesChanged = true; //force the TextMeshPro Object to be updated on first iteration
+            //every time the object gets enabled, we have to force a re-creation of the text mesh
+            m_forceUpdate = true;
         }
 
         /// <summary>
@@ -62,7 +68,7 @@ namespace ntw.CurvedTextMeshPro
         protected void Update()
         {
             //if the text and the parameters are the same of the old frame, don't waste time in re-computing everything
-            if (!m_TextComponent.havePropertiesChanged && !ParametersHaveChanged())
+            if (!m_forceUpdate && !m_TextComponent.havePropertiesChanged && !ParametersHaveChanged())
             {
                 return;
             }
@@ -74,7 +80,7 @@ namespace ntw.CurvedTextMeshPro
             Matrix4x4 matrix;
 
             //Generate the mesh and get information about the text and the characters
-            m_TextComponent.ForceMeshUpdate(); 
+            m_TextComponent.ForceMeshUpdate();
 
             TMP_TextInfo textInfo = m_TextComponent.textInfo;
             int characterCount = textInfo.characterCount;
@@ -84,7 +90,7 @@ namespace ntw.CurvedTextMeshPro
                 return;
 
             //gets the bounds of the rectangle that contains the text 
-            float boundsMinX = m_TextComponent.bounds.min.x;  
+            float boundsMinX = m_TextComponent.bounds.min.x;
             float boundsMaxX = m_TextComponent.bounds.max.x;
 
             //for each character
@@ -96,14 +102,14 @@ namespace ntw.CurvedTextMeshPro
 
                 //Get the index of the mesh used by this character, then the one of the material... and use all this data to get
                 //the 4 vertices of the rect that encloses this character. Store them in vertices
-                int vertexIndex = textInfo.characterInfo[i].vertexIndex;                
+                int vertexIndex = textInfo.characterInfo[i].vertexIndex;
                 int materialIndex = textInfo.characterInfo[i].materialReferenceIndex;
                 vertices = textInfo.meshInfo[materialIndex].vertices;
 
                 //Compute the baseline mid point for each character. This is the central point of the character.
                 //we will use this as the point representing this character for the geometry transformations
                 Vector3 charMidBaselinePos = new Vector2((vertices[vertexIndex + 0].x + vertices[vertexIndex + 2].x) / 2, textInfo.characterInfo[i].baseLine);
-               
+
                 //remove the central point from the vertices point. After this operation, every one of the four vertices 
                 //will just have as coordinates the offset from the central position. This will come handy when will deal with the rotations
                 vertices[vertexIndex + 0] += -charMidBaselinePos;
@@ -145,6 +151,6 @@ namespace ntw.CurvedTextMeshPro
         /// <param name="textInfo">Information on the text that we are showing</param>
         /// <param name="charIdx">Index of the character we have to compute the transformation for</param>
         /// <returns>Transformation matrix to be applied to all vertices of the text</returns>
-        protected abstract Matrix4x4 ComputeTransformationMatrix(Vector3 charMidBaselinePos, float zeroToOnePos, TMP_TextInfo textInfo, int charIdx);        
+        protected abstract Matrix4x4 ComputeTransformationMatrix(Vector3 charMidBaselinePos, float zeroToOnePos, TMP_TextInfo textInfo, int charIdx);
     }
 }
