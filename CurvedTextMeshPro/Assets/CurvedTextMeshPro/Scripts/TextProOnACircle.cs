@@ -55,6 +55,16 @@ namespace ntw.CurvedTextMeshPro
         private float m_angularOffset = -90;
 
         /// <summary>
+        /// How many maximum degrees per letters should be. For instance, if you specify
+        /// 10 degrees, the distance between the letters will never be superior to 10 degrees.
+        /// It is useful to create text that gracefully expands until it reaches the full arc,
+        /// without making the letters to sparse when the string is short
+        /// </summary>
+        [SerializeField]
+        [Tooltip("The maximum angular distance between letters, in degrees")]
+        private int m_maxDegreesPerLetter = 360;
+
+        /// <summary>
         /// Previous value of <see cref="m_radius"/>
         /// </summary>
         private float m_oldRadius = float.MaxValue;
@@ -70,17 +80,23 @@ namespace ntw.CurvedTextMeshPro
         private float m_oldAngularOffset = float.MaxValue;
 
         /// <summary>
+        /// Previous value of <see cref="m_maxDegreesPerLetter"/>
+        /// </summary>
+        private float m_oldMaxDegreesPerLetter = float.MaxValue;
+
+        /// <summary>
         /// Method executed at every frame that checks if some parameters have been changed
         /// </summary>
         /// <returns></returns>
         protected override bool ParametersHaveChanged()
         {
             //check if paramters have changed and update the old values for next frame iteration
-            bool retVal = m_radius != m_oldRadius || m_arcDegrees != m_oldArcDegrees || m_angularOffset != m_oldAngularOffset;
+            bool retVal = m_radius != m_oldRadius || m_arcDegrees != m_oldArcDegrees || m_angularOffset != m_oldAngularOffset || m_oldMaxDegreesPerLetter != m_maxDegreesPerLetter;
 
             m_oldRadius = m_radius;
             m_oldArcDegrees = m_arcDegrees;
             m_oldAngularOffset = m_angularOffset;
+            m_oldMaxDegreesPerLetter = m_maxDegreesPerLetter;
 
             return retVal;
         }
@@ -96,10 +112,13 @@ namespace ntw.CurvedTextMeshPro
         /// <returns>Transformation matrix to be applied to all vertices of the text</returns>
         protected override Matrix4x4 ComputeTransformationMatrix(Vector3 charMidBaselinePos, float zeroToOnePos, TMP_TextInfo textInfo, int charIdx)      
         {
+            //calculate the actual degrees of the arc considering the maximum distance between letters
+            float actualArcDegrees = Mathf.Min(m_arcDegrees, textInfo.characterCount * m_maxDegreesPerLetter);
+
             //compute the angle at which to show this character.
             //We want the string to be centered at the top point of the circle, so we first convert the position from a range [0, 1]
             //to a [-0.5, 0.5] one and then add m_angularOffset degrees, to make it centered on the desired point
-            float angle = ((zeroToOnePos - 0.5f) * m_arcDegrees + m_angularOffset) * Mathf.Deg2Rad; //we need radians for sin and cos
+            float angle = ((zeroToOnePos - 0.5f) * actualArcDegrees + m_angularOffset) * Mathf.Deg2Rad; //we need radians for sin and cos
 
             //compute the coordinates of the new position of the central point of the character. Use sin and cos since we are on a circle.
             //Notice that we have to do some extra calculations because we have to take in count that text may be on multiple lines
