@@ -113,7 +113,7 @@ namespace ntw.CurvedTextMeshPro
         protected override Matrix4x4 ComputeTransformationMatrix(Vector3 charMidBaselinePos, float zeroToOnePos, TMP_TextInfo textInfo, int charIdx)      
         {
             //calculate the actual degrees of the arc considering the maximum distance between letters
-            float actualArcDegrees = Mathf.Min(m_arcDegrees, textInfo.characterCount * m_maxDegreesPerLetter);
+            float actualArcDegrees = Mathf.Min(m_arcDegrees, textInfo.characterCount / textInfo.lineCount * m_maxDegreesPerLetter);
 
             //compute the angle at which to show this character.
             //We want the string to be centered at the top point of the circle, so we first convert the position from a range [0, 1]
