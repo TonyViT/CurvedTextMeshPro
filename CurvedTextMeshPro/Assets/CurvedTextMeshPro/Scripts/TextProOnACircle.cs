@@ -72,7 +72,7 @@ namespace ntw.CurvedTextMeshPro
         private int m_maxDegreesPerLetter = 360;
 
         /// <summary>
-        /// Previous value of <see cref="m_isInner"/>
+        /// Previous value of <see cref="m_flipText"/>
         /// </summary>
         private bool m_oldflipText = false;
 
