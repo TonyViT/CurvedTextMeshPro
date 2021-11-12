@@ -32,6 +32,13 @@ namespace ntw.CurvedTextMeshPro
     [ExecuteInEditMode]
     public class TextProOnACircle : TextProOnACurve
     {
+
+        /// <summary>
+        /// Toggle for flipping the text
+        /// </summary>
+        [SerializeField]
+        private bool m_flipText = false;
+
         /// <summary>
         /// The radius of the text circle arc
         /// </summary>
@@ -65,6 +72,11 @@ namespace ntw.CurvedTextMeshPro
         private int m_maxDegreesPerLetter = 360;
 
         /// <summary>
+        /// Previous value of <see cref="m_isInner"/>
+        /// </summary>
+        private bool m_oldflipText = false;
+
+        /// <summary>
         /// Previous value of <see cref="m_radius"/>
         /// </summary>
         private float m_oldRadius = float.MaxValue;
@@ -91,12 +103,13 @@ namespace ntw.CurvedTextMeshPro
         protected override bool ParametersHaveChanged()
         {
             //check if paramters have changed and update the old values for next frame iteration
-            bool retVal = m_radius != m_oldRadius || m_arcDegrees != m_oldArcDegrees || m_angularOffset != m_oldAngularOffset || m_oldMaxDegreesPerLetter != m_maxDegreesPerLetter;
+            bool retVal = m_oldflipText != m_flipText || m_radius != m_oldRadius || m_arcDegrees != m_oldArcDegrees || m_angularOffset != m_oldAngularOffset || m_oldMaxDegreesPerLetter != m_maxDegreesPerLetter;
 
             m_oldRadius = m_radius;
             m_oldArcDegrees = m_arcDegrees;
             m_oldAngularOffset = m_angularOffset;
             m_oldMaxDegreesPerLetter = m_maxDegreesPerLetter;
+            m_oldflipText = m_flipText;
 
             return retVal;
         }
@@ -110,8 +123,15 @@ namespace ntw.CurvedTextMeshPro
         /// <param name="textInfo">Information on the text that we are showing</param>
         /// <param name="charIdx">Index of the character we have to compute the transformation for</param>
         /// <returns>Transformation matrix to be applied to all vertices of the text</returns>
-        protected override Matrix4x4 ComputeTransformationMatrix(Vector3 charMidBaselinePos, float zeroToOnePos, TMP_TextInfo textInfo, int charIdx)      
+        protected override Matrix4x4 ComputeTransformationMatrix(Vector3 charMidBaselinePos, float zeroToOnePos, TMP_TextInfo textInfo, int charIdx)
         {
+            // if the user wants to flip the text orientation
+            if(m_flipText)
+            {
+              // first need to flip the positions of the letters
+              zeroToOnePos = 1 - zeroToOnePos;
+            }
+
             //calculate the actual degrees of the arc considering the maximum distance between letters
             float actualArcDegrees = Mathf.Min(m_arcDegrees, textInfo.characterCount / textInfo.lineCount * m_maxDegreesPerLetter);
 
@@ -122,14 +142,23 @@ namespace ntw.CurvedTextMeshPro
 
             //compute the coordinates of the new position of the central point of the character. Use sin and cos since we are on a circle.
             //Notice that we have to do some extra calculations because we have to take in count that text may be on multiple lines
-            float x0 = Mathf.Cos(angle);            
+            float x0 = Mathf.Cos(angle);
             float y0 = Mathf.Sin(angle);
             float radiusForThisLine = m_radius - textInfo.lineInfo[0].lineExtents.max.y * textInfo.characterInfo[charIdx].lineNumber;
             Vector2 newMideBaselinePos = new Vector2(x0 * radiusForThisLine, -y0 * radiusForThisLine); //actual new position of the character
 
-            //compute the trasformation matrix: move the points to the just found position, then rotate the character to fit the angle of the curve 
+            //rotate the character to fit the angle of the curve
             //(-90 is because the text is already vertical, it is as if it were already rotated 90 degrees)
-            return Matrix4x4.TRS(new Vector3(newMideBaselinePos.x, newMideBaselinePos.y, 0), Quaternion.AngleAxis(-Mathf.Atan2(y0, x0) * Mathf.Rad2Deg - 90, Vector3.forward), Vector3.one);
+            Quaternion rotation = Quaternion.AngleAxis(-Mathf.Atan2(y0, x0) * Mathf.Rad2Deg - 90, Vector3.forward);
+
+            if(m_flipText)
+            {
+              // flip the rotation of the character 180 degrees
+              rotation *= Quaternion.AngleAxis(180, Vector3.forward);
+            }
+
+            //compute the trasformation matrix: move the points to the just found position
+            return Matrix4x4.TRS(new Vector3(newMideBaselinePos.x, newMideBaselinePos.y, 0), rotation, Vector3.one);
         }
     }
 }
